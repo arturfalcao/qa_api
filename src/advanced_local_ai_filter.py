@@ -459,6 +459,53 @@ class AdvancedLocalAIFilter:
 
         return min(1.0, final_prob * size_mult * subtlety_boost * decorative_penalty)
 
+    def filter_detections_ensemble(self, image: np.ndarray, detections: List[Dict], threshold: float = 0.75) -> List[Dict]:
+        """
+        Advanced ensemble filtering using all RTX 5090 optimized models.
+
+        Args:
+            image: Original image
+            detections: List of detections to filter
+            threshold: Probability threshold for keeping detections
+
+        Returns:
+            List of high-confidence filtered detections
+        """
+        print(f"🚀 RTX 5090 Advanced AI: Processing {len(detections)} detections...")
+        print(f"   Using ensemble threshold: {threshold}")
+
+        filtered_detections = []
+        processing_stats = {"processed": 0, "kept": 0, "filtered": 0}
+
+        for i, det in enumerate(detections):
+            processing_stats["processed"] += 1
+
+            # Compute advanced probability using all models
+            prob = self.compute_advanced_hole_probability(image, det)
+            det['advanced_ai_probability'] = prob
+
+            # Apply ensemble filtering
+            if prob >= threshold:
+                filtered_detections.append(det)
+                processing_stats["kept"] += 1
+            else:
+                processing_stats["filtered"] += 1
+
+            # Progress indicator
+            if i % 20 == 0:
+                print(f"   Processed: {i+1}/{len(detections)} ({processing_stats['kept']} kept)")
+
+        # Sort by probability (highest first)
+        filtered_detections.sort(key=lambda x: x['advanced_ai_probability'], reverse=True)
+
+        print(f"✅ RTX 5090 Advanced AI Results:")
+        print(f"   Processed: {processing_stats['processed']}")
+        print(f"   Kept: {processing_stats['kept']}")
+        print(f"   Filtered out: {processing_stats['filtered']}")
+        print(f"   Reduction: {(1 - processing_stats['kept']/processing_stats['processed'])*100:.1f}%")
+
+        return filtered_detections
+
 
 def test_advanced_local_filter():
     """Test the advanced local AI filter."""

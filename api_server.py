@@ -106,7 +106,8 @@ async def detect_holes(
     openai_threshold: float = Form(0.7, description="OpenAI verification threshold"),
     tile_size: int = Form(512, description="Tile size for segmented detection"),
     overlap: int = Form(128, description="Tile overlap for segmented detection"),
-    min_confidence: float = Form(0.7, description="Minimum detection confidence")
+    min_confidence: float = Form(0.7, description="Minimum detection confidence"),
+    advanced_ai: bool = Form(False, description="Use advanced RTX 5090 optimized AI models")
 ):
     """
     Detect holes in uploaded garment image
@@ -178,6 +179,49 @@ async def detect_holes(
 
                 # Clean up temp file
                 os.unlink(enhanced_detections_path)
+
+            elif advanced_ai:
+                # Use advanced RTX 5090 optimized AI models
+                logger.info("Running advanced RTX 5090 optimized AI detection")
+
+                # Import advanced models
+                from advanced_local_ai_filter import AdvancedLocalAIFilter
+                from detect_holes_segmented import SegmentedHoleDetector
+
+                # Run initial detection
+                initial_detector = SegmentedHoleDetector()
+                initial_detections = initial_detector.detect_holes(
+                    temp_file_path,
+                    tile_size=tile_size,
+                    overlap=overlap,
+                    min_confidence=min_confidence
+                )
+
+                # Apply advanced AI filtering with strict thresholds
+                advanced_filter = AdvancedLocalAIFilter()
+                image = cv2.imread(temp_file_path)
+
+                # Use balanced threshold for advanced AI - the models are already sophisticated
+                # Don't add too much to the threshold since advanced models are better at discrimination
+                advanced_threshold = min(0.7, local_threshold + 0.1)  # More conservative increase
+                logger.info(f"Using advanced AI threshold: {advanced_threshold}")
+
+                detections = advanced_filter.filter_detections_ensemble(
+                    image,
+                    initial_detections,
+                    threshold=advanced_threshold
+                )
+
+                # Apply additional size-based filtering for real holes
+                size_filtered = []
+                for det in detections:
+                    area = det['bbox']['w'] * det['bbox']['h']
+                    # Real holes are typically 200-5000 pixels
+                    if 200 <= area <= 5000:
+                        size_filtered.append(det)
+
+                detections = size_filtered
+                logger.info(f"Advanced AI: {len(initial_detections)} -> {len(detections)} detections")
 
             else:
                 # Use local AI verification only
