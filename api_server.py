@@ -107,7 +107,9 @@ async def detect_holes(
     tile_size: int = Form(512, description="Tile size for segmented detection"),
     overlap: int = Form(128, description="Tile overlap for segmented detection"),
     min_confidence: float = Form(0.7, description="Minimum detection confidence"),
-    advanced_ai: bool = Form(False, description="Use advanced RTX 5090 optimized AI models")
+    advanced_ai: bool = Form(False, description="Use advanced RTX 5090 optimized AI models"),
+    fabric_optimized: bool = Form(False, description="Use fabric-optimized models for maximum defect detection"),
+    winclip: bool = Form(False, description="Use WinCLIP zero-shot anomaly detection (arXiv:2303.14814)")
 ):
     """
     Detect holes in uploaded garment image
@@ -179,6 +181,72 @@ async def detect_holes(
 
                 # Clean up temp file
                 os.unlink(enhanced_detections_path)
+
+            elif winclip:
+                # Use WinCLIP zero-shot anomaly detection for maximum accuracy
+                logger.info("Running WinCLIP zero-shot anomaly detection (arXiv:2303.14814)")
+
+                # Import WinCLIP detector
+                from winclip_fabric_detector import WinCLIPFabricDetector
+                from detect_holes_segmented import SegmentedHoleDetector
+
+                # Run initial detection
+                initial_detector = SegmentedHoleDetector()
+                initial_detections = initial_detector.detect_holes(
+                    temp_file_path,
+                    tile_size=tile_size,
+                    overlap=overlap,
+                    min_confidence=min_confidence
+                )
+
+                # Apply WinCLIP anomaly detection
+                winclip_detector = WinCLIPFabricDetector()
+                image = cv2.imread(temp_file_path)
+
+                # Use optimized threshold for WinCLIP
+                winclip_threshold = max(0.70, local_threshold)
+                logger.info(f"Using WinCLIP threshold: {winclip_threshold}")
+
+                detections = winclip_detector.filter_detections_winclip(
+                    image,
+                    initial_detections,
+                    threshold=winclip_threshold
+                )
+
+                logger.info(f"WinCLIP: {len(initial_detections)} -> {len(detections)} detections")
+
+            elif fabric_optimized:
+                # Use fabric-optimized models for maximum defect detection
+                logger.info("Running fabric-optimized AI for maximum hole detection")
+
+                # Import fabric-optimized models
+                from fabric_optimized_ai_filter import FabricOptimizedAIFilter
+                from detect_holes_segmented import SegmentedHoleDetector
+
+                # Run initial detection
+                initial_detector = SegmentedHoleDetector()
+                initial_detections = initial_detector.detect_holes(
+                    temp_file_path,
+                    tile_size=tile_size,
+                    overlap=overlap,
+                    min_confidence=min_confidence
+                )
+
+                # Apply fabric-optimized AI filtering
+                fabric_filter = FabricOptimizedAIFilter()
+                image = cv2.imread(temp_file_path)
+
+                # Use optimized threshold for fabric defect detection
+                fabric_threshold = max(0.65, local_threshold)  # Optimized for fabric defects
+                logger.info(f"Using fabric-optimized threshold: {fabric_threshold}")
+
+                detections = fabric_filter.filter_detections_fabric_optimized(
+                    image,
+                    initial_detections,
+                    threshold=fabric_threshold
+                )
+
+                logger.info(f"Fabric-Optimized AI: {len(initial_detections)} -> {len(detections)} detections")
 
             elif advanced_ai:
                 # Use advanced RTX 5090 optimized AI models
