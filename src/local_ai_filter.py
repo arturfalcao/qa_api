@@ -335,7 +335,8 @@ def test_local_filter():
     print(f"\n📊 LOCAL AI SUMMARY:")
     print(f"  🎯 Actual hole rank: #{actual_hole_rank}")
     print(f"  🔥 High-probability detections (>0.45): {len(high_prob_detections)}")
-    print(f"  📉 Reduction: {len(detections)} → {len(high_prob_detections)} ({(1-len(high_prob_detections)/len(detections))*100:.1f}%)")
+    reduction_pct = (1-len(high_prob_detections)/len(detections))*100 if len(detections) > 0 else 0.0
+    print(f"  📉 Reduction: {len(detections)} → {len(high_prob_detections)} ({reduction_pct:.1f}%)")
 
     # Save high-probability detections for OpenAI verification
     with open("local_filtered_detections.json", "w") as f:

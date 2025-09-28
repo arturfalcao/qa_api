@@ -114,7 +114,7 @@ class AIHoleVerifier:
         brightness_diff = abs(patch_mean - context_mean) / 255.0
 
         edges = cv2.Canny(gray_patch, 50, 150)
-        edge_density = np.sum(edges > 0) / edges.size
+        edge_density = np.sum(edges > 0) / edges.size if edges.size > 0 else 0.0
 
         laplacian = cv2.Laplacian(gray_patch, cv2.CV_64F)
         texture_var = np.var(laplacian) / 1000.0
@@ -266,7 +266,8 @@ class VerifiedHoleDetector:
         print(f"Initial detections: {len(detections)}")
         print(f"Passed verification: {len(verified_detections)}")
         print(f"False positives filtered: {len(detections) - len(verified_detections)}")
-        print(f"Reduction: {(1 - len(verified_detections)/len(detections))*100:.1f}%")
+        reduction_pct = (1 - len(verified_detections)/len(detections))*100 if len(detections) > 0 else 0.0
+        print(f"Reduction: {reduction_pct:.1f}%")
 
         verified_detections.sort(key=lambda d: d['verification_score'], reverse=True)
 

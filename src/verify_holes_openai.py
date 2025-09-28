@@ -300,7 +300,8 @@ class UltimateHoleDetector:
         print(f"  After AI verification: {len(verified_detections)}")
         print(f"  After enhanced filtering: {len(enhanced_detections)}")
         print(f"  After OpenAI verification: {len(final_detections)}")
-        print(f"  Total reduction: {(1 - len(final_detections)/len(initial_detections))*100:.1f}%")
+        reduction_pct = (1 - len(final_detections)/len(initial_detections))*100 if len(initial_detections) > 0 else 0.0
+        print(f"  Total reduction: {reduction_pct:.1f}%")
 
         return final_detections
 

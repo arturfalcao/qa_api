@@ -80,7 +80,7 @@ class SegmentedHoleDetector:
                 tile_img = image[y1:y2, x1:x2].copy()
                 tile_mask = mask[y1:y2, x1:x2].copy()
 
-                garment_ratio = np.sum(tile_mask == 255) / tile_mask.size
+                garment_ratio = np.sum(tile_mask == 255) / tile_mask.size if tile_mask.size > 0 else 0.0
                 if garment_ratio < 0.3:
                     continue
 
@@ -154,7 +154,7 @@ class SegmentedHoleDetector:
         for y in range(0, h - patch_size + 1, stride):
             for x in range(0, w - patch_size + 1, stride):
                 patch_mask = tile_mask[y:y+patch_size, x:x+patch_size]
-                garment_ratio = np.sum(patch_mask == 255) / patch_mask.size
+                garment_ratio = np.sum(patch_mask == 255) / patch_mask.size if patch_mask.size > 0 else 0.0
 
                 if garment_ratio < 0.5:
                     continue

@@ -40,7 +40,7 @@ class ImprovedHoleScorer:
         # Count pixels significantly darker than context
         dark_threshold = context_mean - 30  # 30 gray levels darker
         dark_pixels = np.sum(gray_patch < dark_threshold)
-        background_visibility = dark_pixels / gray_patch.size
+        background_visibility = dark_pixels / gray_patch.size if gray_patch.size > 0 else 0.0
 
         # 3. EDGE IRREGULARITY - Real holes have torn/irregular edges
         edges = cv2.Canny(gray_patch, 30, 100)

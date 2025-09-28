@@ -82,8 +82,9 @@ class IntegratedHolePipeline:
         print(f"🎯 FINAL PIPELINE RESULTS")
         print(f"{'=' * 80}")
         print(f"✨ Final verified holes: {len(final_detections)}")
+        reduction_pct = (1 - len(final_detections)/len(enhanced_detections))*100 if len(enhanced_detections) > 0 else 0.0
         print(f"📊 Total reduction: {len(enhanced_detections)} → {len(final_detections)} " +
-              f"({(1 - len(final_detections)/len(enhanced_detections))*100:.1f}%)")
+              f"({reduction_pct:.1f}%)")
 
         # Check for target hole
         self.check_target_hole(final_detections)

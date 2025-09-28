@@ -52,7 +52,7 @@ class EnhancedHoleFilter:
         boundary_edges = np.concatenate([
             edges[0, :], edges[-1, :], edges[:, 0], edges[:, -1]
         ])
-        boundary_edge_ratio = np.sum(boundary_edges > 0) / len(boundary_edges)
+        boundary_edge_ratio = np.sum(boundary_edges > 0) / len(boundary_edges) if len(boundary_edges) > 0 else 0.0
 
         h_img, w_img = image.shape[:2]
         center_x = x + w // 2
@@ -140,7 +140,8 @@ class EnhancedHoleFilter:
         print(f"  Input detections: {len(detections)}")
         print(f"  Final score threshold: {min_final_score:.3f}")
         print(f"  ✓ Passed scoring filter: {len(filtered)}")
-        print(f"  Reduction: {(1 - len(filtered)/len(detections))*100:.1f}%")
+        reduction_pct = (1 - len(filtered)/len(detections))*100 if len(detections) > 0 else 0.0
+        print(f"  Reduction: {reduction_pct:.1f}%")
 
         filtered.sort(key=lambda d: d['final_confidence_score'], reverse=True)
 
@@ -240,7 +241,9 @@ def test_enhanced_filtering():
     print(f"  Initial detections: 209")
     print(f"  After AI verification: {len(detections)}")
     print(f"  After enhanced filtering: {len(final_detections)}")
-    print(f"  Total reduction: {(1 - len(final_detections)/209)*100:.1f}%")
+    initial_count = 209  # This should be passed as parameter ideally
+    reduction_pct = (1 - len(final_detections)/initial_count)*100 if initial_count > 0 else 0.0
+    print(f"  Total reduction: {reduction_pct:.1f}%")
 
     if final_detections:
         print(f"\n\nTop {min(10, len(final_detections))} Detections:")

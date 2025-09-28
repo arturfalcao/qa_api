@@ -493,7 +493,8 @@ def test_advanced_local_filter():
 
     print(f"\n🔥 ADVANCED LOCAL AI RESULTS")
     print("-" * 60)
-    print(f"Processing time: {processing_time:.1f}s ({processing_time/len(detections)*1000:.1f}ms per detection)")
+    per_detection_ms = processing_time/len(detections)*1000 if len(detections) > 0 else 0.0
+    print(f"Processing time: {processing_time:.1f}s ({per_detection_ms:.1f}ms per detection)")
 
     # Check actual hole ranking
     target_x, target_y = 1660, 2482
@@ -514,7 +515,8 @@ def test_advanced_local_filter():
 
     print(f"\n📊 ADVANCED AI SUMMARY:")
     print(f"  🎯 Actual hole rank: #{actual_hole_rank}")
-    print(f"  ⚡ Processing speed: {len(detections)/processing_time:.1f} detections/sec")
+    speed = len(detections)/processing_time if processing_time > 0 else 0.0
+    print(f"  ⚡ Processing speed: {speed:.1f} detections/sec")
     print(f"  🚀 Hardware utilization: RTX 5090 optimized")
 
     # Save results
