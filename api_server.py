@@ -110,7 +110,8 @@ async def detect_holes(
     advanced_ai: bool = Form(False, description="Use advanced RTX 5090 optimized AI models"),
     fabric_optimized: bool = Form(False, description="Use fabric-optimized models for maximum defect detection"),
     winclip: bool = Form(False, description="Use WinCLIP zero-shot anomaly detection (arXiv:2303.14814)"),
-    zero_shot_pipeline: bool = Form(False, description="Use complete zero-shot pipeline: WinCLIP + SAM2 + Florence-2 + PatchCore")
+    zero_shot_pipeline: bool = Form(False, description="Use complete zero-shot pipeline: WinCLIP + SAM2 + Florence-2 + PatchCore"),
+    simplified_zero_shot: bool = Form(False, description="Use simplified zero-shot pipeline (stable version)")
 ):
     """
     Detect holes in uploaded garment image
@@ -182,6 +183,48 @@ async def detect_holes(
 
                 # Clean up temp file
                 os.unlink(enhanced_detections_path)
+
+            elif simplified_zero_shot:
+                # Use simplified zero-shot pipeline (stable version)
+                logger.info("Running simplified zero-shot pipeline (stable)")
+                logger.info("Components: WinCLIP + Simple Masking + Heuristic Grounding")
+
+                # Import simplified pipeline
+                from simplified_zero_shot_pipeline import SimplifiedZeroShotPipeline
+
+                # Initialize and run pipeline
+                pipeline = SimplifiedZeroShotPipeline()
+                image = cv2.imread(temp_file_path)
+
+                # Use optimized thresholds
+                winclip_threshold = max(0.55, local_threshold - 0.1)
+                grounding_threshold = 0.45
+
+                logger.info(f"Using simplified thresholds: WinCLIP={winclip_threshold}, Grounding={grounding_threshold}")
+
+                # Run simplified pipeline
+                pipeline_detections = pipeline.run_simplified_pipeline(
+                    image,
+                    winclip_threshold=winclip_threshold,
+                    grounding_threshold=grounding_threshold
+                )
+
+                # Convert to standard format
+                detections = []
+                for det in pipeline_detections:
+                    detection = {
+                        "bbox": det["bbox"],
+                        "confidence": float(det.get("final_confidence", 0.8)),
+                        "area_pixels": float(det["bbox"]["w"] * det["bbox"]["h"]),
+                        "verification_score": float(det.get("final_confidence", 0.8)),
+                        "winclip_score": float(det.get("winclip_score", 0.5)),
+                        "grounding_score": float(det.get("grounding_score", 0.5)),
+                        "confidence_reason": det.get("confidence_reason", "unknown"),
+                        "pipeline_type": "simplified_zero_shot"
+                    }
+                    detections.append(detection)
+
+                logger.info(f"Simplified Zero-Shot: {len(pipeline_detections)} confirmed defects")
 
             elif zero_shot_pipeline:
                 # Use complete zero-shot pipeline: WinCLIP + SAM2 + Florence-2 + PatchCore
