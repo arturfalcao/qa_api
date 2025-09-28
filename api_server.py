@@ -109,7 +109,8 @@ async def detect_holes(
     min_confidence: float = Form(0.7, description="Minimum detection confidence"),
     advanced_ai: bool = Form(False, description="Use advanced RTX 5090 optimized AI models"),
     fabric_optimized: bool = Form(False, description="Use fabric-optimized models for maximum defect detection"),
-    winclip: bool = Form(False, description="Use WinCLIP zero-shot anomaly detection (arXiv:2303.14814)")
+    winclip: bool = Form(False, description="Use WinCLIP zero-shot anomaly detection (arXiv:2303.14814)"),
+    zero_shot_pipeline: bool = Form(False, description="Use complete zero-shot pipeline: WinCLIP + SAM2 + Florence-2 + PatchCore")
 ):
     """
     Detect holes in uploaded garment image
@@ -181,6 +182,57 @@ async def detect_holes(
 
                 # Clean up temp file
                 os.unlink(enhanced_detections_path)
+
+            elif zero_shot_pipeline:
+                # Use complete zero-shot pipeline: WinCLIP + SAM2 + Florence-2 + PatchCore
+                logger.info("Running complete zero-shot fabric defect detection pipeline")
+                logger.info("Components: WinCLIP + SAM2 + Florence-2 + PatchCore")
+
+                # Import zero-shot pipeline
+                from zero_shot_fabric_pipeline import ZeroShotFabricPipeline
+
+                # Initialize and run pipeline
+                pipeline = ZeroShotFabricPipeline()
+                image = cv2.imread(temp_file_path)
+
+                # Use optimized thresholds for zero-shot pipeline
+                winclip_threshold = max(0.65, local_threshold - 0.05)  # Slightly lower for more detection
+                grounding_threshold = 0.4  # Reasonable threshold for grounding confirmation
+
+                logger.info(f"Using zero-shot thresholds: WinCLIP={winclip_threshold}, Grounding={grounding_threshold}")
+
+                # Run complete pipeline
+                pipeline_detections = pipeline.run_zero_shot_pipeline(
+                    image,
+                    winclip_threshold=winclip_threshold,
+                    grounding_threshold=grounding_threshold
+                )
+
+                # Convert to standard detection format
+                detections = []
+                for det in pipeline_detections:
+                    detection = {
+                        "bbox": det["bbox"],
+                        "confidence": float(det.get("final_confidence", 0.8)),
+                        "area_pixels": float(det["bbox"]["w"] * det["bbox"]["h"]),
+                        "verification_score": float(det.get("final_confidence", 0.8)),
+                        "grounding_score": float(det.get("grounding_score", 0.5)),
+                        "confidence_reason": det.get("confidence_reason", "unknown"),
+                        "grounding_type": det.get("grounding_type", "none"),
+                        "pipeline_type": "zero_shot_complete"
+                    }
+                    detections.append(detection)
+
+                logger.info(f"Zero-Shot Pipeline: Complete pipeline -> {len(detections)} confirmed defects")
+
+                # Save debug visualization if requested
+                try:
+                    heatmap = pipeline.generate_winclip_heatmap(image)
+                    debug_path = f"/tmp/zero_shot_debug_{int(time.time())}.png"
+                    pipeline.save_debug_visualization(image, heatmap, pipeline_detections, debug_path)
+                    logger.info(f"Debug visualization saved: {debug_path}")
+                except Exception as e:
+                    logger.warning(f"Debug visualization failed: {e}")
 
             elif winclip:
                 # Use WinCLIP zero-shot anomaly detection for maximum accuracy

@@ -1,0 +1,33 @@
+# Zero-Shot Fabric Defect Detection Pipeline Requirements
+
+# Core dependencies (already installed)
+torch>=2.0.0
+transformers>=4.30.0
+opencv-python>=4.5.0
+numpy>=1.21.0
+scipy>=1.7.0
+scikit-learn>=1.0.0
+matplotlib>=3.5.0
+
+# Advanced models for zero-shot pipeline
+# Florence-2 (Microsoft)
+# Available via transformers - requires trust_remote_code=True
+
+# Grounding models
+# OWL-ViT available via transformers
+
+# SAM2 (Meta) - Optional, fallback masking implemented
+# segment-anything-2  # Would need: pip install git+https://github.com/facebookresearch/segment-anything-2.git
+
+# SAM (Original) - Optional fallback
+# segment-anything  # Would need: pip install git+https://github.com/facebookresearch/segment-anything.git
+
+# PatchCore for unsupervised anomaly detection - Optional
+# anomalib>=1.0.0  # Would need: pip install anomalib
+
+# Additional utilities
+Pillow>=9.0.0
+tqdm>=4.60.0
+
+# Note: The pipeline gracefully degrades if optional dependencies are not available
+# Core functionality (WinCLIP heatmap + simple masking + cross-confirmation) works with base dependencies
